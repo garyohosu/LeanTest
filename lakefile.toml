@@ -1,0 +1,10 @@
+name = "LeanTest"
+version = "0.1.0"
+defaultTargets = ["Proofs"]
+
+# 証明未完了 (sorry 等) の警告をビルド失敗として扱う
+[leanOptions]
+warningAsError = true
+
+[[lean_lib]]
+name = "Proofs"
