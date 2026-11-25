@@ -34,13 +34,13 @@ LeanTest.add_comm' : ∀ (a b : Nat), a + b = b + a
 LeanTest.add_assoc' : ∀ (a b c : Nat), a + b + c = a + (b + c)
 LeanTest.double_eq_two_mul : ∀ (n : Nat), LeanTest.double n = 2 * n
 LeanTest.add_zero' : ∀ (n : Nat), n + 0 = n
-'LeanTest.add_comm'' depends on axioms: [propext, Quot.sound]
+'LeanTest.add_comm'' does not depend on any axioms
 'LeanTest.add_assoc'' does not depend on any axioms
 'LeanTest.double_eq_two_mul' depends on axioms: [propext, Quot.sound]
 'LeanTest.add_zero'' does not depend on any axioms
 ```
 
-- 標準公理: `propext`, `Quot.sound` (`rw` / `omega` 経由)。`Classical.choice` は不使用。
+- 標準公理: `propext`, `Quot.sound` (`double_eq_two_mul` の `omega` 経由)。`Classical.choice` は不使用。
 - 追加公理: なし。`sorryAx` もなし。
 
 ### エラーと修正内容
@@ -55,4 +55,33 @@ Lean の証明自体はエラーなく成功したため、命題の弱化・削
 
 ### CI
 
-`.github/workflows/lean.yml` を追加しました。push 後の GitHub Actions の結果は下記に追記します。
+`.github/workflows/lean.yml` を追加しました。
+
+| 実行日時 (UTC) | 対象コミット | 結果 |
+|---|---|---|
+| 2026-11-25 00:59 | `498ff2a` | success ([run](https://github.com/garyohosu/LeanTest/actions/runs/45522305158)) |
+| 2026-11-25 01:00 | `2e5fbc0` | success ([run](https://github.com/garyohosu/LeanTest/actions/runs/45522503552)) |
+
+CI 上の Lean は 4.36.0 (x86_64-unknown-linux-gnu, ubuntu-24.04)。偽命題は exit code 1 で拒否された。
+
+## 2026-11-25 追記: `add_comm'` の書き換え漏れ
+
+`#print LeanTest.add_comm'` を実行したところ、証明項に `Decidable.byContradiction` (omega 由来) が残っていた。上記「エラーと修正内容」で書き直したと記録した `rw` による証明が、実際には適用されていなかった。Git Bash の `python` が Microsoft Store のスタブ (`WindowsApps\python`) で、置換スクリプトが実行されていなかったのが原因。上記 CI 節の追記も同じ理由で抜けていた。
+
+- 修正: Edit ツールで `add_comm'` を `rw [Nat.add_zero, Nat.zero_add]` / `rw [Nat.add_succ, ih, Nat.succ_add]` に書き直した (定理の型は変更なし)
+- 再検証: `./scripts/verify.sh` が終了コード 0 で `ALL CHECKS PASSED`
+- `#print axioms LeanTest.add_comm'`: `does not depend on any axioms` (以前の `[propext, Quot.sound]` から変化)
+- `#print LeanTest.add_comm'` の出力:
+
+```
+theorem LeanTest.add_comm' : ∀ (a b : Nat), a + b = b + a :=
+fun a b =>
+  Nat.recAux
+    (Eq.mpr (id (congrArg (fun _a => _a = 0 + a) (Nat.add_zero a)))
+      (Eq.mpr (id (congrArg (fun _a => a = _a) (Nat.zero_add a))) (Eq.refl a)))
+    (fun k ih =>
+      Eq.mpr (id (congrArg (fun _a => _a = k + 1 + a) (Nat.add_succ a k)))
+        (Eq.mpr (id (congrArg (fun _a => _a.succ = k + 1 + a) ih))
+          (Eq.mpr (id (congrArg (fun _a => (k + a).succ = _a) (Nat.succ_add k a))) (Eq.refl (k + a).succ))))
+    b
+```

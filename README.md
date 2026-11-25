@@ -20,7 +20,7 @@ Claude Code が Lean 4 の証明コードを生成し、実際に Lean を実行
 
 | 定理 | 型 | 依存公理 |
 |---|---|---|
-| `add_comm'` | `∀ (a b : Nat), a + b = b + a` | propext, Quot.sound |
+| `add_comm'` | `∀ (a b : Nat), a + b = b + a` (帰納法) | なし |
 | `add_assoc'` | `∀ (a b c : Nat), a + b + c = a + (b + c)` | なし |
 | `double_eq_two_mul` | `∀ (n : Nat), double n = 2 * n` (`double n := n + n`) | propext, Quot.sound |
 | `add_zero'` | `∀ (n : Nat), n + 0 = n` (帰納法) | なし |

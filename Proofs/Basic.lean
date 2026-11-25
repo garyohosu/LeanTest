@@ -13,8 +13,8 @@ namespace LeanTest
 /-- 自然数の加算の交換則 -/
 theorem add_comm' (a b : Nat) : a + b = b + a := by
   induction b with
-  | zero => simp
-  | succ k ih => omega
+  | zero => rw [Nat.add_zero, Nat.zero_add]
+  | succ k ih => rw [Nat.add_succ, ih, Nat.succ_add]
 
 /-- 自然数の加算の結合則 -/
 theorem add_assoc' (a b c : Nat) : a + b + c = a + (b + c) := by
